@@ -15,7 +15,7 @@
 
 1. Клонировать репозиторий:
    ```bash
-   git clone https://example.com/distributed-arithmetic-expression-evaluator-v2.0.git
+   git clone https://github.com/AZEN-SGG/Distributed-arithmetic-expression-evaluator-version-2.0.git
    ```
 2. Перейти в каталог проекта:
    ```bash
@@ -78,18 +78,21 @@
 
 ### Регистрация нового пользователя
 ```bash
-curl -X POST -d "username=user1&password=pass123" http://localhost:8080/register
+curl -X POST http://localhost:8080/register -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"password\":\"pass123\"}"
 ```
 
 ### Авторизация пользователя
 ```bash
-curl -X GET "http://localhost:8080/login?username=user1&password=pass123"
+curl -X GET http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"password\":\"pass123\"}"
 ```
-
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"token\":\"pass123\"}"
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.l_K3jRZhOYg8l8zEgWJPUlTnEaiNiyBm13ExDACtZxk
 ### Добавление выражения
 ```bash
-curl -X POST -d "id=expr1&expression=2*2&username=user1&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.bxi3MK96co-CcUTQdlA0jgzDa1JMJgLGOBodS9D2iH4" http://localhost:8080/expression
+curl -X POST http://localhost:8080/expression -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"id\":\"user_id_123\", \"content\":\"2 + 2\", \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.bxi3MK96co-CcUTQdlA0jgzDa1JMJgLGOBodS9D2iH4\"}"
+
 ```
+
 
 ### Получение списка выражений
 ```bash

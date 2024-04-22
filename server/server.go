@@ -1,88 +1,65 @@
 package server
 
 import (
-	"Distributed-arithmetic-expression-evaluator-version-2.0/authorization"
 	"Distributed-arithmetic-expression-evaluator-version-2.0/calculator"
 	"Distributed-arithmetic-expression-evaluator-version-2.0/client"
 	"Distributed-arithmetic-expression-evaluator-version-2.0/data"
 	"Distributed-arithmetic-expression-evaluator-version-2.0/database"
-	"Distributed-arithmetic-expression-evaluator-version-2.0/rest"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
-var (
-	DB         *database.DB
-	WebClients *client.Clients
-)
-
-func FormatExpression(id string, expr *rest.Expression) []string {
-	var ok, err = expr.GetValue()
-	var status string
-
-	switch {
-	case err != nil:
-		status = err.Error()
-	case ok == -1:
-		status = "Считается"
-	default:
-		status = "Высчитан"
-	}
-
-	return []string{id, status, expr.Express, expr.Created.Format("02 Jan at 15:04:05"), strconv.FormatInt(expr.Expiration.Milliseconds(), 10) + "ms"}
-}
-
-func ResultHandler(w http.ResponseWriter, r *http.Request) {
+func ArithmeticsHandler(w http.ResponseWriter, r *http.Request) {
+	defer Close(r)
 	if r.Method != http.MethodPost {
-		w.WriteHeader(400)
+		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var (
-		name = r.FormValue("username")
-		id   = r.FormValue("id")
-	)
-	if name == "" || id == "" {
-		w.WriteHeader(400)
+	var expr ClientExpression
+	if err := json.NewDecoder(r.Body).Decode(&expr); err != nil {
+		http.Error(w, "Invalid JSON data: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if expr.Username == "" || expr.ID == "" || expr.Content == "" {
+		http.Error(w, "Username, ID, and content must not be empty", http.StatusBadRequest)
 		return
 	}
 
 	WebClients.Mu.Lock()
-	var webClient = WebClients.Names[id]
+	webClient, exists := WebClients.Names[expr.ID]
 	WebClients.Mu.Unlock()
-	if webClient == nil {
-		w.WriteHeader(400)
+
+	if !exists {
+		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
-	var result, err = webClient.Expressions.GetExpression(id)
+	preparedContent, err := calculator.PreparingExpression(expr.Content)
 	if err != nil {
-		w.WriteHeader(400)
+		http.Error(w, "Error preparing expression: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if result.Value == -1 {
-		result.Value, err = result.GetValue()
-
-		if err != nil {
-			w.WriteHeader(400)
-			return
-		}
+	if _, err = webClient.Expressions.AddExpression(expr.ID, preparedContent); err != nil {
+		http.Error(w, "Error adding expression: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	_, err = fmt.Fprintf(w, "Expression - %s = %d\nCreation data: %s\nTime: %s", result.Express, result.Value, result.Created, result.Expiration)
-
+	_, err = fmt.Fprint(w, "Expression added successfully")
 	if err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 }
 
 func ListProcessHandler(w http.ResponseWriter, r *http.Request) {
+	defer Close(r)
 	var (
 		err  error
 		name = r.FormValue("username")
@@ -132,46 +109,6 @@ func ListProcessHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-}
-
-func ArithmeticsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(400)
-		return
-	}
-	var (
-		expr = strings.Replace(r.FormValue("expression"), " ", "+", -1)
-		id   = r.FormValue("id")
-		name = r.FormValue("username")
-		err  error
-	)
-	if name == "" || id == "" || expr == "" {
-		w.WriteHeader(400)
-		return
-	}
-
-	WebClients.Mu.Lock()
-	var webClient = WebClients.Names[id]
-	WebClients.Mu.Unlock()
-	if webClient == nil {
-		w.WriteHeader(400)
-		return
-	}
-
-	expr, err = calculator.PreparingExpression(expr)
-
-	if err != nil {
-		w.WriteHeader(400)
-		return
-	}
-
-	_, err = webClient.Expressions.AddExpression(id, expr)
-
-	if err != nil {
-		w.WriteHeader(400)
-		return
-	}
-
 }
 
 func MathOperationsHandler(w http.ResponseWriter, r *http.Request) {
@@ -292,13 +229,13 @@ func ProcessesHandler(w http.ResponseWriter, r *http.Request) {
 func MuxHandler() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.Handle("/get", authorization.AuthorizationMiddleware(ResultHandler))
-	mux.Handle("/list", authorization.AuthorizationMiddleware(ListProcessHandler))
-	mux.Handle("/expression", authorization.AuthorizationMiddleware(ArithmeticsHandler))
+	mux.Handle("/get", AuthorizationMiddleware(ResultHandler))
+	mux.Handle("/list", AuthorizationMiddleware(ListProcessHandler))
+	mux.Handle("/expression", AuthorizationMiddleware(ArithmeticsHandler))
 	mux.HandleFunc("/math", MathOperationsHandler)
 	mux.HandleFunc("/processes", ProcessesHandler)
-	mux.HandleFunc("/login", authorization.LoginHandler)
-	mux.HandleFunc("/register", authorization.RegisterHandler)
+	mux.HandleFunc("/login", LoginHandler)
+	mux.HandleFunc("/register", RegisterHandler)
 	return mux
 }
 
@@ -312,7 +249,6 @@ func StartHandler(port string) {
 		log.Fatal("Database is nil")
 	}
 
-	authorization.DB = DB
 	WebClients, err = client.NewClients(DB)
 	if err != nil {
 		log.Fatal("Failed to create clients: ", err)
