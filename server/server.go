@@ -236,6 +236,7 @@ func MuxHandler() *http.ServeMux {
 	mux.HandleFunc("/processes", ProcessesHandler)
 	mux.HandleFunc("/login", LoginHandler)
 	mux.HandleFunc("/register", RegisterHandler)
+
 	return mux
 }
 

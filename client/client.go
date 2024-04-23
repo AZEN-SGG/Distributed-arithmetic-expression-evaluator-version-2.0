@@ -89,6 +89,10 @@ func (c *Client) GenerateToken() (string, error) {
 // VerifyToken проверяет валидность переданного токена.
 func (c *Client) VerifyToken(tokenString string) error {
 	var token, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
 		return []byte(c.secret), nil // использование секрета клиента для верификации токена
 	})
 	if err != nil {
@@ -99,7 +103,11 @@ func (c *Client) VerifyToken(tokenString string) error {
 		return fmt.Errorf("invalid token") // возвращение ошибки, если токен недействителен
 	}
 
-	return nil
+	if _, ok := token.Claims.(jwt.MapClaims); ok {
+		return nil
+	}
+
+	return fmt.Errorf("invalid token") // возвращение ошибки, если токен недействителен
 }
 
 type Clients struct {
