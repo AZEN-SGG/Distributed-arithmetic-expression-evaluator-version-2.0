@@ -2,8 +2,10 @@ package server
 
 import (
 	"Distributed-arithmetic-expression-evaluator-version-2.0/client"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 )
@@ -96,12 +98,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func AuthorizationMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Cannot read the request body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Reset r.Body to be readable again
+
 		var expr ClientExpression
-		if err := json.NewDecoder(r.Body).Decode(&expr); err != nil {
+		if err := json.Unmarshal(bodyBytes, &expr); err != nil {
 			http.Error(w, "Invalid JSON data: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer Close(r) // Ensure the body is closed after reading
 
 		if expr.Username == "" || expr.Token == "" {
 			http.Error(w, "Username and token cannot be empty", http.StatusBadRequest)
@@ -120,7 +130,9 @@ func AuthorizationMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Call the next handler, passing along the request and response writer
+		// Re-assign the readable body back to the request
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
 		next.ServeHTTP(w, r)
 	})
 }

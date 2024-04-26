@@ -91,7 +91,7 @@ curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d 
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.l_K3jRZhOYg8l8zEgWJPUlTnEaiNiyBm13ExDACtZxk
 ### Добавление выражения
 ```bash
-curl -X POST http://localhost:8080/expression -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"id\":\"user_id_123\", \"content\":\"2 + 2\", \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.bxi3MK96co-CcUTQdlA0jgzDa1JMJgLGOBodS9D2iH4\"}"
+curl -X POST http://localhost:8080/expression -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"id\":\"user_id_123\", \"content\":\"2 + 2\", \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.l_K3jRZhOYg8l8zEgWJPUlTnEaiNiyBm13ExDACtZxk\"}"
 
 ```
 

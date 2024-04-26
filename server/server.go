@@ -31,7 +31,7 @@ func ArithmeticsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WebClients.Mu.Lock()
-	webClient, exists := WebClients.Names[expr.ID]
+	webClient, exists := WebClients.Names[expr.Username]
 	WebClients.Mu.Unlock()
 
 	if !exists {
@@ -250,10 +250,16 @@ func StartHandler(port string) {
 		log.Fatal("Database is nil")
 	}
 
+	_, err = database.NewExpressionsDB("database/data.db")
+	if err != nil {
+		log.Fatal("Failed to initialize database: ", err)
+	}
+
 	WebClients, err = client.NewClients(DB)
 	if err != nil {
 		log.Fatal("Failed to create clients: ", err)
 	}
+	fmt.Println(WebClients)
 
 	var mux = MuxHandler()
 	log.Printf("Server start listening on http://localhost:%s/", port)

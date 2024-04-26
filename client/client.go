@@ -41,16 +41,24 @@ func GetClient(db *database.DB, name string) (*Client, error) {
 		return nil, errors.New("database connection is nil")
 	}
 
-	user, err := db.GetUser(name)
+	var (
+		expression *expressions.Expressions // выражение, которое будет использовано для генерации токена
+		user, err  = db.GetUser(name)
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %v", err)
+	}
+
+	expression, err = db.GetExpressions(user.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get expressions: %v", err)
 	}
 
 	client := &Client{
 		name:        user.Name,
 		password:    user.Password,
 		secret:      user.Secret,
-		Expressions: expressions.NewExpressions(),
+		Expressions: expression,
 	}
 
 	// Дальнейшая логика
@@ -122,15 +130,24 @@ func NewClients(db *database.DB) (*Clients, error) {
 	}
 
 	var (
-		names   = make(map[string]*Client)
-		webUser *Client
+		names      = make(map[string]*Client)
+		webUser    *Client
+		expression *expressions.Expressions
 	)
 
 	for _, el := range userNames {
-		webUser, err = GetClient(db, el.Name)
+		expression, err = db.GetExpressions(el.Name)
 		if err != nil {
 			return nil, err
 		}
+
+		webUser = &Client{
+			name:        el.Name,
+			password:    el.Password,
+			secret:      el.Secret,
+			Expressions: expression,
+		}
+
 		names[el.Name] = webUser // добавление пользователя в коллекцию
 	}
 
