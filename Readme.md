@@ -1,161 +1,136 @@
-# Распределенный вычислитель арифметических выражений версия 2.0
+# Distributed Arithmetic Expression Evaluator Version 2.0
 
-Пожалуйста не проверяйте пока мою работу, скоро закончу, буду вам весьма признателен
+## Overview
 
-## Обзор
+The Distributed Arithmetic Expression Evaluator Version 2.0 is an enhanced system for asynchronous arithmetic expression computations, supporting multi-user operations. This system integrates user registration and authentication, manages expressions, calculates results, and preserves them in a database.
 
-Распределенный вычислитель арифметических выражений версия 2.0 представляет собой улучшенную систему для асинхронных вычислений арифметических выражений, поддерживающую работу с множеством пользователей. Система обладает расширенной функциональностью для регистрации и авторизации пользователей, управления выражениями, их вычисления и сохранения результатов в базу данных.
+## Getting Started
 
-## Начало работы
+### Prerequisites
 
-### Требования
+- Go 1.22 or higher
+- SQLite database for storing user data and expressions
 
-- Go 1.22 или выше
-- СУБД SQLite для хранения данных пользователей и выражений
+### Installation and Setup
 
-### Установка и запуск
-
-1. Клонировать репозиторий:
+1. Clone the repository:
    ```bash
    git clone https://github.com/AZEN-SGG/Distributed-arithmetic-expression-evaluator-version-2.0.git
    ```
-2. Перейти в каталог проекта:
+2. Navigate to the project directory:
    ```bash
    cd distributed-arithmetic-expression-evaluator-v2.0
    ```
-3. Запустить сервер:
+3. Start the server:
    ```bash
    go run main.go
    ```
 
-## Компоненты системы
+## System Components
 
-### Сервер
-Основной компонент системы, который обеспечивает следующие функции:
-- **Регистрация и авторизация пользователей**
-- **Добавление, обработка и хранение арифметических выражений**
-- **Управление статусами и результатами выражений**
-- **Выполнение арифметических операций с учетом заданного времени**
+### Server
 
-### Клиенты
-Модуль, отвечающий за взаимодействие пользователей с системой. Поддерживает функции регистрации, авторизации и отправки запросов на вычисление выражений.
+The server is the core component that handles:
+- User registration and authentication
+- Addition, processing, and storage of arithmetic expressions
+- Management of expression statuses and results
+- Execution of arithmetic operations with specified timing
 
-## Основные HTTP интерфейсы
+### Clients
 
-### Регистрация пользователя
+This module allows users to interact with the system, supporting registration, authentication, and requests for expression evaluation.
+
+## HTTP Interfaces
+
+### User Registration
 **POST** `/register`
-- Принимает параметры `username` и `password`.
-- Регистрирует нового пользователя в системе.
+- Accepts parameters `username` and `password`.
+- Registers a new user in the system.
 
-### Авторизация пользователя
+### User Authentication
 **GET** `/login`
-- Принимает параметры `username` и `password`.
-- Возвращает токен для доступа к защищенным маршрутам.
+- Accepts parameters `username` and `password`.
+- Returns a JWT token for accessing protected routes.
 
-### Добавление арифметического выражения
+### Adding an Arithmetic Expression
 **POST** `/expression`
-- Принимает параметры `expression`, `id` и `username`.
-- Добавляет арифметическое выражение в базу и запускает его вычисление.
+- Accepts parameters `expression`, `id`, and `username`.
+- Adds an arithmetic expression to the database and initiates its calculation.
 
-### Получение результата выражения
+### Retrieving the Result of an Expression
 **POST** `/get`
-- Принимает параметры `id` и `username`.
-- Возвращает результат выражения, если оно было вычислено.
+- Accepts parameters `id` and `username`.
+- Returns the result of the computed expression, if available.
 
-### Список всех выражений пользователя
+### List All Expressions for a User
 **GET** `/list`
-- Принимает параметр `username`.
-- Возвращает список всех выражений пользователя с их статусами.
+- Accepts parameter `username`.
+- Returns a list of all expressions belonging to the user along with their statuses.
 
-### Управление временем выполнения операций
+### Managing Operation Execution Time
 **GET/POST** `/math`
-- GET возвращает текущие времена выполнения операций.
-- POST позволяет обновлять времена выполнения операций (параметры `addition`, `subtraction`, `multiplication`, `division`).
+- GET returns the current execution times of operations.
+- POST allows updating the execution times of operations (parameters `addition`, `subtraction`, `multiplication`, `division`).
 
-### Просмотр и управление вычислительными процессами
+### Viewing and Managing Computing Processes
 **GET** `/processes`
-- Возвращает информацию о текущих вычислительных процессах.
+- Returns information about current computing processes.
 
-## Примеры использования
+## Usage Examples
 
-### Регистрация нового пользователя
+### Register a New User
 ```bash
 curl -X POST http://localhost:8080/register -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"password\":\"pass123\"}"
 ```
 
-### Авторизация пользователя
+### Authenticate a User
 ```bash
 curl -X GET http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"password\":\"pass123\"}"
 ```
-curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"token\":\"pass123\"}"
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.l_K3jRZhOYg8l8zEgWJPUlTnEaiNiyBm13ExDACtZxk
-### Добавление выражения
+
+### Add an Expression
 ```bash
 curl -X POST http://localhost:8080/expression -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"id\":\"user_id_123\", \"content\":\"2 + 2\", \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.l_K3jRZhOYg8l8zEgWJPUlTnEaiNiyBm13ExDACtZxk\"}"
-
 ```
 
-
-### Получение списка выражений
+### List Expressions for a User
 ```bash
-curl -X GET -d "username=user1" http://localhost:8080/list
+curl -X GET http://localhost:8080/list -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.l_K3jRZhOYg8l8zEgWJPUlTnEaiNiyBm13ExDACtZxk\"}"
 ```
 
-### Получение результата выражения
+### Retrieve the Result of an Expression
 ```bash
-curl -X POST -d "id=expr1&username=user1" http://localhost:8080/get
+curl -X POST http://localhost:8080/get -H "Content-Type: application/json" -d "{\"username\":\"user1\", \"id\":\"user_id_123\", \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidXNlcjEiLCJwYXNzd29yZCI6InBhc3MxMjMifQ.l_K3jRZhOYg
+
+8l8zEgWJPUlTnEaiNiyBm13ExDACtZxk\"}"
 ```
 
-## Взаимодействие с сервером
-Сервер предоставляет REST API для взаимодействия. Запросы можно отправлять через любой HTTP-клиент, например, `curl` или через программы для тестирования API, такие как Postman.
+## Server Interaction
 
-## Масштабируемость и надежность
-Система поддерживает масштабирование путем добавления дополнительных вычислительных ресурсов. Все данные надежно сохраняются в базе данных, что позволяет восстанавливать работу системы без потери данных после сбоев.
-## Защита и безопасность
+The server provides a REST API for interactions. Requests can be made via any HTTP client, such as `curl` or API testing tools like Postman.
 
-Система обеспечивает безопасность данных и операций благодаря следующим механизмам:
+## Scalability and Reliability
 
-- **Шифрование паролей**: Пароли пользователей хранятся в зашифрованном виде.
-- **JWT аутентификация**: Доступ к операциям, требующим авторизации, контролируется через JWT токены, обеспечивая, что каждый запрос аутентифицирован.
-- **Ограничение доступа**: Пользователи могут взаимодействовать только со своими выражениями, исключая возможность доступа к чужим данным.
+The system supports scaling by adding more computing resources. All data is securely stored in a database, allowing the system to resume operations without data loss after failures.
 
-## Мониторинг и управление
+## Security and Protection
 
-### Процессы
-Система обеспечивает контроль за выполнением выражений и операциями:
+The system ensures data and operation security through:
+- **Password Encryption**: User passwords are stored in an encrypted format.
+- **JWT Authentication**: Access to operations requiring authorization is controlled via JWT tokens, ensuring each request is authenticated.
+- **Access Restrictions**: Users can only interact with their expressions, preventing access to others' data.
 
-- **Мониторинг состояния выражений**: Оркестратор отслеживает все активные и ожидающие выражения, позволяя пользователям получать информацию о статусе их выражений в реальном времени.
-- **Управление вычислительными ресурсами**: Система предоставляет информацию о текущих вычислительных ресурсах, используемых для обработки выражений, что помогает оптимизировать загрузку ресурсов и время выполнения операций.
+## Monitoring and Management
 
-### Оптимизация вычислений
-Оптимизация процесса вычислений происходит за счет распределенной обработки запросов и асинхронной архитектуры:
+### Processes
+The system monitors active and pending expressions, offering real-time status updates to users. It provides information on current computing resources, helping optimize resource load and operation times.
 
-- **Балансировка нагрузки**: Вычислительные запросы равномерно распределяются между доступными ресурсами, что увеличивает эффективность обработки и снижает время ожидания ответа.
-- **Асинхронная обработка**: Выражения обрабатываются асинхронно, позволяя системе обрабатывать множество запросов одновременно без блокировки основного потока выполнения.
+## Backup and Recovery
 
-## Резервное копирование и восстановление
+Regular data backups are performed, ensuring business continuity and data protection:
+- **Database Backups**: Regular archiving of data allows system recovery in the event of failures.
+- **Recovery after Failures**: In case of system crashes or data loss, the orchestrator can quickly restore operational state using the latest backups.
 
-Для обеспечения непрерывности бизнес-процессов и защиты данных пользователей, система поддерживает регулярное резервное копирование данных:
+## Conclusion
 
-- **Резервное копирование базы данных**: Все данные регулярно архивируются, что позволяет восстановить систему в случае сбоев или потери данных.
-- **Восстановление после сбоев**: В случае сбоя системы или потери данных, оркестратор может быстро восстановить операционное состояние, используя последние доступные резервные копии.
-
-## Примеры дополнительных запросов
-
-### Обновление времени выполнения операций
-```bash
-curl -X POST http://localhost:8080/math -d "addition=1000&subtraction=500&multiplication=1200&division=1500"
-```
-**Описание:** Этот запрос обновляет времена выполнения арифметических операций: сложения до 1000 мс, вычитания до 500 мс, умножения до 1200 мс и деления до 1500 мс.
-
-### Просмотр вычислительных ресурсов
-```bash
-curl http://localhost:8080/processes
-```
-**Описание:** Запрос возвращает список текущих вычислительных ресурсов и задач, выполняемых на них, что помогает администраторам мониторить загрузку и распределение ресурсов в ре
-
-альном времени.
-
-## Заключение
-
-Распределенный вычислитель арифметических выражений версия 2.0 представляет собой мощную, масштабируемую и безопасную систему для асинхронного вычисления арифметических выражений, обеспечивающую пользователям гибкий инструмент для работы с большими объемами данных в многопользовательской среде.
+The Distributed Arithmetic Expression Evaluator Version 2.0 is a robust, scalable, and secure system for asynchronous arithmetic expression calculations, offering users a flexible tool for handling large data volumes in a multi-user environment.
