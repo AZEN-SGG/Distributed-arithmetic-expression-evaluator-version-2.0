@@ -252,6 +252,25 @@ func (db *DB) AddExpression(expr *rest.Expression, id, user string) error {
 	return tx.Commit()
 }
 
+func (db *DB) ChangeExpression(value int, id, user string) error {
+	var changeStmt = `UPDATE expressions SET value = $2 WHERE id = $4 AND user = $5;`
+	tx, err := db.Connection.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(changeStmt, value, id, user)
+	if err != nil {
+		anErr := tx.Rollback()
+		if anErr != nil {
+			return anErr
+		}
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (db *DB) GetExpression(id, userName string) (*rest.Expression, error) {
 	var (
 		getStmt  = `SELECT expression, value, date FROM expressions WHERE id = $1 AND user = $2;`

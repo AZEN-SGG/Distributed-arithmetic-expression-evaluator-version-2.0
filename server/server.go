@@ -5,6 +5,7 @@ import (
 	"Distributed-arithmetic-expression-evaluator-version-2.0/client"
 	"Distributed-arithmetic-expression-evaluator-version-2.0/data"
 	"Distributed-arithmetic-expression-evaluator-version-2.0/database"
+	"Distributed-arithmetic-expression-evaluator-version-2.0/rest"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -45,7 +46,13 @@ func ArithmeticsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = webClient.Expressions.AddExpression(expr.ID, preparedContent); err != nil {
+	var ex *rest.Expression
+	if ex, err = webClient.Expressions.AddExpression(expr.ID, preparedContent); err != nil {
+		http.Error(w, "Error adding expression: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = DB.AddExpression(ex, expr.ID, expr.Username); err != nil {
 		http.Error(w, "Error adding expression: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -61,15 +68,21 @@ func ArithmeticsHandler(w http.ResponseWriter, r *http.Request) {
 func ListProcessHandler(w http.ResponseWriter, r *http.Request) {
 	defer Close(r)
 	var (
-		err  error
-		name = r.FormValue("username")
+		err    error
+		clExpr ClientExpression
 	)
-	if name == "" {
+	if err = json.NewDecoder(r.Body).Decode(&clExpr); err != nil {
+		http.Error(w, "Invalid JSON data: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if clExpr.Username == "" {
 		w.WriteHeader(400)
 		return
 	}
+
 	WebClients.Mu.Lock()
-	webClient := WebClients.Names[name]
+	webClient := WebClients.Names[clExpr.Username]
 	WebClients.Mu.Unlock()
 	if webClient == nil {
 		w.WriteHeader(400)
