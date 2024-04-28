@@ -159,7 +159,7 @@ func ResultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WebClients.Mu.Lock()
-	var webClient = WebClients.Names[expr.ID]
+	var webClient = WebClients.Names[expr.Username]
 	WebClients.Mu.Unlock()
 	if webClient == nil {
 		w.WriteHeader(400)
